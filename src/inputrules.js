@@ -11,7 +11,7 @@ export class InputRule {
   // :: (RegExp, union<string, (state: EditorState, match: [string], start: number, end: number) → ?Transaction>)
   // Create an input rule. The rule applies when the user typed
   // something and the text directly in front of the cursor matches
-  // `match`, which should probably end with `$`.
+  // `match`, which should end with `$`.
   //
   // @cn 创建一个输入规则。规则会应用到当用户输入一些内容的时候，且直接在光标之前的文本会匹配 `match` 参数，该参数应该合适的用 `$` 结尾。
   //
@@ -121,8 +121,13 @@ export function undoInputRule(state, dispatch) {
         let tr = state.tr, toUndo = undoable.transform
         for (let j = toUndo.steps.length - 1; j >= 0; j--)
           tr.step(toUndo.steps[j].invert(toUndo.docs[j]))
-        let marks = tr.doc.resolve(undoable.from).marks()
-        dispatch(tr.replaceWith(undoable.from, undoable.to, state.schema.text(undoable.text, marks)))
+        if (undoable.text) {
+          let marks = tr.doc.resolve(undoable.from).marks()
+          tr.replaceWith(undoable.from, undoable.to, state.schema.text(undoable.text, marks))
+        } else {
+          tr.delete(undoable.from, undoable.to)
+        }
+        dispatch(tr)
       }
       return true
     }
